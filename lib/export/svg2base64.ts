@@ -50,9 +50,15 @@ const encode = (input: string) => {
   return output;
 };
 
+/** DOM Element → data URL（浏览器端） */
 export const svg2Base64 = (element: Element) => {
   const XMLS = new XMLSerializer();
   const svg = XMLS.serializeToString(element);
 
   return PREFIX + encode(svg);
+};
+
+/** SVG 标记字符串 → data URL（服务端 / 浏览器均可） */
+export const svgMarkupToBase64 = (svgMarkup: string) => {
+  return PREFIX + encode(svgMarkup);
 };

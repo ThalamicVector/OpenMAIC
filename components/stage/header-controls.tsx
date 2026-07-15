@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { StageMode } from '@/lib/types/stage';
+import { useEduMindEmbed } from '@/lib/integrations/edumind/use-edumind-embed';
 
 interface HeaderControlsProps {
   readonly mode?: StageMode;
@@ -65,6 +66,7 @@ export function HeaderControls({
   const { t } = useI18n();
   const { theme, setTheme } = useTheme();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const isEduMindEmbed = useEduMindEmbed();
 
   // Export plumbing — uses the stage / media task stores to check
   // readiness, then hands off to the export hooks. Available in both
@@ -101,6 +103,11 @@ export function HeaderControls({
   }, [exportMenuOpen, handleClickOutside]);
 
   const compact = variant === 'compact';
+
+  // EduMind iframe：去掉设置 / 下载 / Pro，避免跳出或干扰学习
+  if (isEduMindEmbed) {
+    return null;
+  }
 
   // Self-contained spacing so the control cluster is identical regardless of
   // host. The playback Header (`gap-4`) and the edit CommandBar's trailing
