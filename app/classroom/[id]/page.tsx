@@ -14,10 +14,7 @@ import { MediaStageProvider } from '@/lib/contexts/media-stage-context';
 import { generateMediaForOutlines } from '@/lib/media/media-orchestrator';
 import { migrateScene } from '@/lib/edit/slide-schema';
 import type { Scene } from '@/lib/types/stage';
-import {
-  loadClassroomFromJsonUrl,
-  setupEduMindEmbedLifecycle,
-} from '@/lib/integrations/edumind/client-bridge';
+import { setupEduMindEmbedLifecycle } from '@/lib/integrations/edumind/client-bridge';
 
 const log = createLogger('Classroom');
 
@@ -25,7 +22,6 @@ export default function ClassroomDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const classroomId = params?.id as string;
-  const jsonUrl = searchParams?.get('jsonUrl')?.trim() || null;
   const embedEduMind = searchParams?.get('embed') === 'edumind';
 
   const { loadFromStorage } = useStageStore();
@@ -85,21 +81,6 @@ export default function ClassroomDetailPage() {
         }
       }
 
-      // EduMind 集成：从 MinIO jsonUrl 加载（共享课堂）
-      if (!useStageStore.getState().stage && jsonUrl) {
-        log.info('Trying external jsonUrl for:', classroomId);
-        const external = await loadClassroomFromJsonUrl(jsonUrl);
-        if (external) {
-          useStageStore.getState().setStage(external.stage as never);
-          useStageStore.setState({
-            scenes: external.scenes,
-            currentSceneId: external.scenes[0]?.id ?? null,
-            mode: 'playback',
-          });
-          log.info('Loaded from external jsonUrl:', classroomId);
-        }
-      }
-
       if (embedEduMind) {
         setupEduMindEmbedLifecycle(classroomId, searchParams?.get('treeNodeId'));
       }
@@ -148,7 +129,7 @@ export default function ClassroomDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [classroomId, jsonUrl, embedEduMind, searchParams, loadFromStorage]);
+  }, [classroomId, embedEduMind, searchParams, loadFromStorage]);
 
   useEffect(() => {
     // Reset loading state on course switch to unmount Stage during transition,

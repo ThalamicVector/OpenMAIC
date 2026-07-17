@@ -1,50 +1,8 @@
 'use client';
 
-import type { Scene } from '@/lib/types/stage';
-import { migrateScene } from '@/lib/edit/slide-schema';
-import {
-  unwrapEduMindClassroomJson,
-  type EduMindClassroomWrapper,
-} from '@/lib/integrations/edumind/classroom-json';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('EduMindIntegration');
-
-/**
- * 当 IndexedDB / 服务端均无数据时，从 jsonUrl 加载（EduMind MinIO）。
- */
-export async function loadClassroomFromJsonUrl(
-  jsonUrl: string,
-): Promise<{ stage: Record<string, unknown>; scenes: Scene[] } | null> {
-  try {
-    const proxyUrl = `/api/classroom/import-from-url?url=${encodeURIComponent(jsonUrl)}`;
-    let res = await fetch(proxyUrl);
-    if (res.ok) {
-      const json = await res.json();
-      const classroom = json.success
-        ? json.classroom
-        : (json.data?.classroom ?? json.classroom);
-      if (classroom?.stage && Array.isArray(classroom.scenes)) {
-        const migrated = (classroom.scenes as Scene[]).map(migrateScene);
-        return { stage: classroom.stage, scenes: migrated };
-      }
-    }
-
-    res = await fetch(jsonUrl, { cache: 'no-store' });
-    if (!res.ok) {
-      log.warn('Direct jsonUrl fetch failed:', res.status);
-      return null;
-    }
-    const raw = (await res.json()) as EduMindClassroomWrapper;
-    const unwrapped = unwrapEduMindClassroomJson(raw);
-    if (!unwrapped) return null;
-    const migrated = (unwrapped.scenes as Scene[]).map(migrateScene);
-    return { stage: unwrapped.stage, scenes: migrated };
-  } catch (e) {
-    log.warn('loadClassroomFromJsonUrl error:', e);
-    return null;
-  }
-}
 
 export function notifyEduMindParent(event: string, payload: Record<string, unknown>) {
   if (typeof window === 'undefined') return;
