@@ -1077,7 +1077,8 @@ export async function buildPptxBlob(
 
   if (typeof window === 'undefined') {
     const buf = (await pptx.write({ outputType: 'nodebuffer' })) as Buffer;
-    return new Blob([buf]);
+    // Buffer → Uint8Array：避免 TS 将 Buffer.buffer(ArrayBufferLike) 判为不兼容 BlobPart
+    return new Blob([new Uint8Array(buf)]);
   }
   return (await pptx.write({ outputType: 'blob' })) as Blob;
 }
